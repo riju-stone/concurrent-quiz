@@ -1,0 +1,11 @@
+{
+  "name": "concurrent-quiz-client",
+  "version": "1.0.0",
+  "description": "Static frontend for the Concurrent Quiz — deploys to Vercel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/inject-socket-url.js",
+    "dev": "bun run scripts/inject-socket-url.js && bun run scripts/dev-server.js"
+  }
+}

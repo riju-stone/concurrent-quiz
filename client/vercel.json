@@ -1,0 +1,11 @@
+{
+  "outputDirectory": "public",
+  "buildCommand": "node scripts/inject-socket-url.js",
+  "installCommand": "echo 'no dependencies'",
+  "framework": null,
+  "routes": [
+    { "src": "/css/(.*)", "dest": "/css/$1" },
+    { "src": "/js/(.*)", "dest": "/js/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

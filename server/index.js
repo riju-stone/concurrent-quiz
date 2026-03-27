@@ -1,18 +1,17 @@
 /**
- * Entry point — wires Express (static file serving) with Socket.IO
- * (real-time quiz events) and the Game state machine.
+ * Entry point — wires Express with Socket.IO (real-time quiz events)
+ * and the Game state machine.
+ *
+ * Static files are served separately (Vercel). This process only handles
+ * WebSocket connections and the /health endpoint.
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 
 import { Game, ROUND_DELAY_SECONDS } from './game.js';
 import { recordWin, fetchTopScores } from './redis.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /* ── bootstrap ──────────────────────────────────────────────────────── */
 
@@ -21,16 +20,16 @@ const app  = express();
 const server = createServer(app);
 const io     = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || '*',
+    origin: process.env.ALLOWED_ORIGIN || '*',
     methods: ['GET', 'POST'],
   },
 });
 
 const game = new Game();
 
-/* ── static files ───────────────────────────────────────────────────── */
+/* ── health check ───────────────────────────────────────────────────── */
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 /* ── helpers ────────────────────────────────────────────────────────── */
 
@@ -124,6 +123,12 @@ io.on('connection', (socket) => {
 
 /* ── start ──────────────────────────────────────────────────────────── */
 
-server.listen(PORT, () => {
-  console.log(`🚀  Quiz server running → http://localhost:${PORT}`);
-});
+// Export for Vercel — the runtime handles binding in production.
+export default server;
+
+// Local development: start listening when NOT running on Vercel.
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`🚀  Quiz server running → http://localhost:${PORT}`);
+  });
+}
