@@ -19,7 +19,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const app  = express();
 const server = createServer(app);
-const io     = new Server(server);
+const io     = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || '*',
+    methods: ['GET', 'POST'],
+  },
+});
 
 const game = new Game();
 

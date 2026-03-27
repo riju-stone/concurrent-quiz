@@ -88,7 +88,7 @@
   /* ── socket connection ─────────────────────────────────────────── */
 
   function connectSocket() {
-    socket = io({ reconnection: true, reconnectionDelay: 500 });
+    socket = io(window.SOCKET_SERVER_URL, { reconnection: true, reconnectionDelay: 500 });
     mySocketId = '';
 
     socket.on('connect', () => {
