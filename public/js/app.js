@@ -29,6 +29,7 @@
 
   const scoreboardList = document.getElementById('scoreboard-list');
   const playerCountEl  = document.getElementById('player-count');
+  const topScoresList  = document.getElementById('top-scores-list');
 
   /* ── state ─────────────────────────────────────────────────────── */
   let socket      = null;
@@ -191,7 +192,8 @@
 
       setText(playerCountEl, `${scores.length} player${scores.length !== 1 ? 's' : ''} online`);
     });
-
+    /* ── all-time top-3 update ───────────────────────────────── */
+    socket.on('top-scores', renderTopScores);
     /* ── reconnection handling ──────────────────────────────────── */
     socket.on('disconnect', () => {
       setText(feedbackEl, 'Connection lost — reconnecting…');
@@ -219,4 +221,28 @@
     div.textContent = str;
     return div.innerHTML;
   }
-})();
+  /* ── top-scores renderer ─────────────────────────────────── */
+
+  const MEDALS = ['🥇', '🥈', '🥉'];
+
+  function renderTopScores(entries) {
+    topScoresList.innerHTML = '';
+
+    if (!entries || entries.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'placeholder';
+      li.textContent = 'No scores yet…';
+      topScoresList.appendChild(li);
+      return;
+    }
+
+    entries.forEach((entry, i) => {
+      const li = document.createElement('li');
+      li.className = 'new-entry';
+      li.innerHTML =
+        `<span class="medal">${MEDALS[i] ?? i + 1 + '.'}</span>` +
+        `<span class="ts-name">${escapeHtml(entry.name)}</span>` +
+        `<span class="ts-score">${entry.score} win${entry.score !== 1 ? 's' : ''}</span>`;
+      topScoresList.appendChild(li);
+    });
+  }})();

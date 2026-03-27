@@ -10,6 +10,7 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 
 import { Game, ROUND_DELAY_SECONDS } from './game.js';
+import { recordWin, fetchTopScores } from './redis.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -74,6 +75,11 @@ io.on('connection', (socket) => {
     }
 
     io.emit('scoreboard', game.getScoreboard());
+
+    // Send the current top-3 to the newly connected client.
+    fetchTopScores()
+      .then((top) => socket.emit('top-scores', top))
+      .catch((err) => console.error('Redis fetchTopScores error:', err));
   });
 
   /* ── answer submission ────────────────────────────────────────────── */
@@ -84,12 +90,19 @@ io.on('connection', (socket) => {
     socket.emit('answer-feedback', result);
 
     if (result.correct && result.first) {
+      const winnerName = game.getPlayerName(socket.id);
+
       // Announce the winner to everyone.
       io.emit('round-result', {
         winnerId:   socket.id,
-        winnerName: game.getPlayerName(socket.id),
+        winnerName,
         answer:     game.currentQuestion.answer,
       });
+
+      // Persist the win and broadcast updated top-3.
+      recordWin(winnerName)
+        .then((top) => io.emit('top-scores', top))
+        .catch((err) => console.error('Redis recordWin error:', err));
 
       scheduleNextRound();
     }
